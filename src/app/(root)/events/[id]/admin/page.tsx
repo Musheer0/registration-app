@@ -1,5 +1,7 @@
 /* eslint-disable  */
 "use client"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 
 import { useParams, useRouter } from "next/navigation"
 import { useTRPC } from "@/trpc/client"
@@ -43,6 +45,48 @@ export default function AdminPage() {
   const { mutate: deleteEvent, isPending: isDeleting } = useMutation(
     trpc.event.delete.mutationOptions()
   )
+const exportPDF = () => {
+  const doc = new jsPDF()
+
+  doc.setFontSize(18)
+  doc.text(statistics?.event?.eventName + " — Event Report", 14, 18)
+
+  doc.setFontSize(11)
+  doc.text("Generated on: " + new Date().toLocaleString(), 14, 26)
+
+  // 🟦 Event Stats Table
+  autoTable(doc, {
+    startY: 36,
+    head: [["Metric", "Value"]],
+    body: [
+      ["Total Registered", statistics?.totalRegistered||0],
+      ["Max Participants", statistics?.maxParticipants || "∞"],
+      ["Registration Rate", statistics?.registrationRate + "%"],
+      ["Available Spots", statistics?.availableSpots || "∞"],
+      [
+        "Event Date",
+        statistics?.event?.dateOfEvent
+          ? new Date(statistics.event.dateOfEvent).toLocaleDateString()
+          : "TBD",
+      ],
+    ],
+  })
+
+  // Users Table
+  autoTable(doc, {
+    startY: doc.lastAutoTable.finalY + 12,
+    head: [["Name", "Email", "USN", "Phone", "Registered"]],
+    body: statistics?.registrations.map((u) => [
+      u.name,
+      u.email,
+      u.usn,
+      u.phoneNumber,
+      new Date(u.createdAt).toLocaleDateString(),
+    ]),
+  })
+
+  doc.save(`${statistics?.event?.eventName}-report.pdf`)
+}
 
   if (isLoading) {
     return (
@@ -201,6 +245,11 @@ export default function AdminPage() {
               <p className="text-muted-foreground mt-1">Event Statistics & Management</p>
             </div>
             <div className="flex gap-2">
+                <Button variant="outline" onClick={exportPDF}>
+    Export PDF
+  </Button>
+
+
               <Button asChild variant="outline">
                 <Link href={`/events/${eventId}/edit`}>
                   <Edit className="w-4 h-4 mr-2" />
