@@ -108,7 +108,6 @@ export const event = pgTable("event", {
   eventStartTime: text("event_start_time"),         // String → text
   eventEndTime: text("event_end_time"),             // String → text
   dateOfEvent: date("date_of_event"),               // Date → date
-  maxVolunteers: integer("max_volunteers"),         // Number → integer
   maxParticipants: integer("max_participants"),     // Number → integer
   registrationEnd: date("registration_end"),        // Date → date
   clubName: text("club_name"),                      // String → text
@@ -148,11 +147,15 @@ export const eventRegisteredUsers = pgTable("event_registered_users", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-      attendedAt: date("attended_at").defaultNow(), 
-     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),},
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  usn: text("usn").notNull(),
+  phoneNumber: text("phone_number").notNull(),
+  attendedAt: date("attended_at").defaultNow(), 
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),},
     (table) => ({
     // 1️⃣ Composite: userId + eventId
     userEventIdx: index("event_reg_user_event_idx").on(

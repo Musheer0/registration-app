@@ -35,7 +35,7 @@ export const requireUnAuth = async()=>{
     headers:await headers()
   });
   if(session?.user){
-    redirect("/")
+    redirect("/events")
   }
   return session;
 }

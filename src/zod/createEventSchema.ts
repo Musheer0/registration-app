@@ -7,7 +7,7 @@ export const createEventSchema = z.object({
   dateOfEvent: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date format"),
   eventStartTime: z.string().min(1, "Start time is required"),
   eventEndTime: z.string().min(1, "End time is required"),
-  maxParticipants: z.number().int().nonnegative(),
+  maxParticipants: z.string(),
   registrationEnd: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date format"),
   clubName: z.string().min(1, "Club name is required").optional(),
   googleFormLink: z.string().url("Please enter a valid URL").optional().or(z.literal("")),

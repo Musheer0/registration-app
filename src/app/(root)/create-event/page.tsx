@@ -3,7 +3,9 @@ import React from 'react'
 
 const page = () => {
   return (
-    <CreateEventForm/>
+    <div className='w-full h-screen p-3'>
+<CreateEventForm/>
+    </div>
   )
 }
 
