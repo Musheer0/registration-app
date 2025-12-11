@@ -1,0 +1,211 @@
+"use client"
+
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { createEventSchema, type CreateEventInput } from "@/zod/createEventSchema"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FileUpload } from "@/components/file-upload"
+import { CalendarIcon, Clock, Users, Link, Building2, FileText, ImageIcon } from "lucide-react"
+import { useTRPC } from "@/trpc/client"
+import { useMutation } from "@tanstack/react-query"
+import { useRouter } from "next/navigation"
+import {toast} from 'sonner'
+export function CreateEventForm() {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateEventInput>({
+    resolver: zodResolver(createEventSchema),
+    defaultValues: {
+      googleFormLink: "https://forms.gle/CdFuxvgp4uyhmKNH7",
+    },
+  });
+  const trpc = useTRPC();
+  const {mutate,isPending} = useMutation(trpc.event.create.mutationOptions())
+  const router = useRouter()
+  const eventPoster = watch("eventPoster")
+  const eventLogo = watch("eventLogo")
+
+  const onSubmit = async (data: CreateEventInput) => {
+    console.log("Form submitted:", data)
+
+    if (data.eventPoster?.bytes) {
+      console.log("Poster type:", data.eventPoster.type)
+      console.log("Poster size:", data.eventPoster.size, "bytes")
+    }
+
+    if (data.eventLogo?.bytes) {
+      console.log("Logo type:", data.eventLogo.type)
+      console.log("Logo size:", data.eventLogo.size, "bytes")
+    }
+
+    await mutate(data,{
+      onSuccess:(data)=>{
+       router.push('/my-events/'+data[0].id)
+      },
+      onError:(err)=>{
+         toast.error(err.message)
+      }
+    });
+  }
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-2xl">Create New Event</CardTitle>
+        <CardDescription>Fill in the details below to create a new event for your club.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Event Name */}
+          <div className="space-y-2">
+            <Label htmlFor="eventName" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Event Name *
+            </Label>
+            <Input id="eventName" placeholder="Enter event name" {...register("eventName")} />
+            {errors.eventName && <p className="text-sm text-destructive">{errors.eventName.message}</p>}
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Description *</Label>
+            <Textarea id="description" placeholder="Describe your event..." rows={4} {...register("description")} />
+            {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
+          </div>
+
+          {/* Club Name & Venue */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="clubName" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Club Name *
+              </Label>
+              <Input id="clubName" placeholder="Enter club name" {...register("clubName")} />
+              {errors.clubName && <p className="text-sm text-destructive">{errors.clubName.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="venue">Venue *</Label>
+              <Input id="venue" placeholder="Event location" {...register("venue")} />
+              {errors.venue && <p className="text-sm text-destructive">{errors.venue.message}</p>}
+            </div>
+          </div>
+
+          {/* Date of Event & Registration End */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="dateOfEvent" className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                Event Date *
+              </Label>
+              <Input id="dateOfEvent" type="date" {...register("dateOfEvent")} />
+              {errors.dateOfEvent && <p className="text-sm text-destructive">{errors.dateOfEvent.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="registrationEnd">Registration Deadline *</Label>
+              <Input id="registrationEnd" type="date" {...register("registrationEnd")} />
+              {errors.registrationEnd && <p className="text-sm text-destructive">{errors.registrationEnd.message}</p>}
+            </div>
+          </div>
+
+          {/* Start & End Time */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="eventStartTime" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Start Time *
+              </Label>
+              <Input id="eventStartTime" type="time" {...register("eventStartTime")} />
+              {errors.eventStartTime && <p className="text-sm text-destructive">{errors.eventStartTime.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="eventEndTime">End Time *</Label>
+              <Input id="eventEndTime" type="time" {...register("eventEndTime")} />
+              {errors.eventEndTime && <p className="text-sm text-destructive">{errors.eventEndTime.message}</p>}
+            </div>
+          </div>
+
+          {/* Volunteers & Participants */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+         
+
+            <div className="space-y-2">
+              <Label htmlFor="maxParticipants">Max Participants</Label>
+              <Input
+                id="maxParticipants"
+                type="number"
+                min="0"
+                placeholder="Optional"
+                {...register("maxParticipants")}
+              />
+              {errors.maxParticipants && <p className="text-sm text-destructive">{errors.maxParticipants.message}</p>}
+            </div>
+          </div>
+
+          {/* Google Form Link */}
+          <div className="space-y-2">
+            <Label htmlFor="googleFormLink" className="flex items-center gap-2">
+              <Link className="h-4 w-4" />
+              Google Form Link
+            </Label>
+            <Input
+              id="googleFormLink"
+              type="url"
+              placeholder="https://forms.google.com/..."
+              {...register("googleFormLink")}
+            />
+            {errors.googleFormLink && <p className="text-sm text-destructive">{errors.googleFormLink.message}</p>}
+          </div>
+
+          {/* Event Poster and Logo Upload */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Event Poster Upload */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Event Poster
+              </Label>
+              <FileUpload
+                value={eventPoster}
+                onChange={(file) => setValue("eventPoster", file, { shouldValidate: true })}
+                accept="image/*"
+                maxSize={5}
+              />
+              <p className="text-xs text-muted-foreground">Upload event poster. Max 5MB.</p>
+            </div>
+
+            {/* Event Logo Upload */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Event Logo
+              </Label>
+              <FileUpload
+                value={eventLogo}
+                onChange={(file) => setValue("eventLogo", file, { shouldValidate: true })}
+                accept="image/*"
+                maxSize={2}
+              />
+              <p className="text-xs text-muted-foreground">Upload event logo. Max 2MB.</p>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? "Creating Event..." : "Create Event"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  )
+}

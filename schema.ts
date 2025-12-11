@@ -1,12 +1,9 @@
 import { relations } from "drizzle-orm";
+import { uniqueIndex } from "drizzle-orm/pg-core";
 import { integer } from "drizzle-orm/pg-core";
 import { date } from "drizzle-orm/pg-core";
 import { pgTable, text, timestamp, boolean, index,pgEnum } from "drizzle-orm/pg-core";
-export const eventUserTypeEnum = pgEnum("event_type", [
-  "ATTENDEES",
-  "PARTICIPENTS",
-  "VOLUNTEERS",
-]);
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -111,11 +108,11 @@ export const event = pgTable("event", {
   eventStartTime: text("event_start_time"),         // String → text
   eventEndTime: text("event_end_time"),             // String → text
   dateOfEvent: date("date_of_event"),               // Date → date
-  maxVolunteers: integer("max_volunteers"),         // Number → integer
   maxParticipants: integer("max_participants"),     // Number → integer
   registrationEnd: date("registration_end"),        // Date → date
   clubName: text("club_name"),                      // String → text
-  eventPoster: text("event_poster"),                // String → text (URL or path)
+  eventPoster: text("event_poster"),                // String → text (URL or path),
+  logo: text("logo"),
     googleFormLink: text("google_form_link")
       .notNull()
       .default("https://forms.gle/CdFuxvgp4uyhmKNH7"),
@@ -146,16 +143,19 @@ export const eventRegisteredUsers = pgTable("event_registered_users", {
     .primaryKey(),
   eventId: text("event_id")
     .notNull()
-    .references(() => event.id, { onDelete: "cascade" }),
-  type: eventUserTypeEnum("type").notNull(),
-  userId: text("user_id").unique()
+    .references(() => event.id, { onDelete: "cascade" }),  
+  userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-      attendedAt: date("attended_at").defaultNow(), 
-     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),},
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  usn: text("usn").notNull(),
+  phoneNumber: text("phone_number").notNull(),
+  attendedAt: date("attended_at").defaultNow(), 
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),},
     (table) => ({
     // 1️⃣ Composite: userId + eventId
     userEventIdx: index("event_reg_user_event_idx").on(
@@ -169,11 +169,9 @@ export const eventRegisteredUsers = pgTable("event_registered_users", {
     // 3️⃣ Single: eventId
     eventIdx: index("event_reg_event_idx").on(table.eventId),
 
-    // 4️⃣ Composite: type + eventId
-    typeEventIdx: index("event_reg_type_event_idx").on(
-      table.type,
-      table.eventId
-    ),
+  EventUnique: uniqueIndex("event_reg_unique")
+  .on(table.userId, table.eventId),
+
   })
 
     );

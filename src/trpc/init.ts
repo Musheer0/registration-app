@@ -1,4 +1,5 @@
-import { initTRPC } from '@trpc/server';
+import { getSession } from '@/lib/session';
+import { initTRPC, TRPCError } from '@trpc/server';
 import { cache } from 'react';
 export const createTRPCContext = cache(async () => {
   /**
@@ -20,3 +21,12 @@ const t = initTRPC.create({
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const baseProcedure = t.procedure;
+export const protectedProcedure =  baseProcedure.use(async({next,ctx})=>{
+  const session = await getSession();
+  if(!session) throw new TRPCError({
+    code:"UNAUTHORIZED",
+    "message":"login to access the resource"
+  });
+  //pass session to next function just like the one in express where you passing using middleware
+  return next({ctx:{...ctx,auth:session}});
+})
