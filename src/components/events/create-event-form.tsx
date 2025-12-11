@@ -48,7 +48,7 @@ export function CreateEventForm() {
 
     await mutate(data,{
       onSuccess:(data)=>{
-       router.push('/my-events/'+data[0].id)
+       router.push('/events/'+data[0].id)
       },
       onError:(err)=>{
          toast.error(err.message)
